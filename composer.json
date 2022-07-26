@@ -1,0 +1,17 @@
+{
+    "name": "deivz/tratamento-arquivos-csv",
+    "description": "API criada para o challenge de back end #3 da Alura",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Deivz\\TratamentoArquivosCsv\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Deivz",
+            "email": "carlosd_oliveira@hotmail.com"
+        }
+    ],
+    "require": {}
+}
