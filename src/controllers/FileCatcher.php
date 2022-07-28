@@ -10,26 +10,60 @@ class FileCatcher extends Renderizador
     public function processarRequisicao()
     {
         try {
-            $this->lerArquivo($_FILES['arquivo']);
+            $this->verificarArquivo($_FILES['arquivo']);
         } catch (\Throwable $th) {
-            // header('Location: /');
-            echo "Arquivo não encontrado!";
+            $_SESSION['mensagemErro'] = "Arquivo não encontrado!";
+            header('Location: /');
         }
-
-        // header('Location: /');
     }
 
-    public function lerArquivo($arquivo)
+    public function verificarArquivo($arquivo)
     {
-        $i = 1;
         $caminho = $arquivo['tmp_name'];
         $stream = fopen($caminho, 'r');
+        $linha = explode(',', fgets($stream));
+
+        if (!isset($linha[7])) {
+            $_SESSION['mensagemErro'] = "O arquivo enviado não possui transações, favor verificar!";
+            header('Location: /');
+            exit;
+        }
+
+        fclose($stream);
+
+        $this->salvarDados($arquivo);
+    }
+
+    public function salvarDados($arquivo)
+    {
+        $caminho = $arquivo['tmp_name'];
+        $stream = fopen($caminho, 'r');
+        $i = 0;
+        $j = 0;
         while (!feof($stream)) {
-            $linha = explode(',', fgets($stream));
-            $transacao[$i] = new Transacao($linha[0], $linha[1], $linha[2], $linha[3], $linha[4], $linha[5], $linha[6], $linha[7]);
-            echo $transacao[$i]->bancoOrigem;
+            $linha[$i] = explode(',', fgets($stream));
+
+            $dataReferencia = substr($linha[0][7], 0, 10);
+            $dataTransacao = substr($linha[$i][7], 0, 10);
+
+            if ($dataReferencia === $dataTransacao && $this->verificarCampos($linha[$i])) {
+                $transacao[$j] = new Transacao($linha[$i][0], $linha[$i][1], $linha[$i][2], $linha[$i][3], $linha[$i][4], $linha[$i][5], $linha[$i][6], $linha[$i][7]);
+                $j++;
+            }
             $i++;
         }
         fclose($stream);
+    }
+
+    public function verificarCampos($linha): bool
+    {
+
+        for ($j = 0; $j < count($linha); $j++) {
+            if ($linha[$j] === '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

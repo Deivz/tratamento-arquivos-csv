@@ -12,8 +12,15 @@
             <button type="submit" id="submit" class="btn btn-primary">Enviar</button>
         </form>
     </main>
+    <?php
+        if(isset($_SESSION['mensagemErro'])) : ?>
+            <div class="container mt-3 alert alert-danger">
+                <?= $_SESSION['mensagemErro'] ?>
+            </div>
+    <?php endif ?>
 </body>
 
 <?php
+    unset($_SESSION['mensagemErro']);
     require 'rodape.php';
 ?>
