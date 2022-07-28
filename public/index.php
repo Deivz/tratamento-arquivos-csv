@@ -4,7 +4,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $caminho = $_SERVER['PATH_INFO'];
 
-$rotas = require __DIR__ . '/../config/routes.php';
+$rotas = require __DIR__ . '/../src/config/routes.php';
 
 if (!array_key_exists($caminho, $rotas)){
     echo "Erro 404: a página que você está tentando acessar não existe!";

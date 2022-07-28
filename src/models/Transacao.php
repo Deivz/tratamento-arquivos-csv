@@ -2,8 +2,11 @@
 
 namespace Deivz\TratamentoArquivosCsv\models;
 
+use PDO;
+
 class Transacao
 {
+    private PDO $conexao;
     private string $bancoOrigem;
     private string $agenciaOrigem;
     private string $contaOrigem;
@@ -14,6 +17,7 @@ class Transacao
     private string $timeStamp;
 
     public function __construct(
+        PDO $conexao,
         string $bancoOrigem,
         string $agenciaOrigem,
         string $contaOrigem,
@@ -24,6 +28,7 @@ class Transacao
         string $timeStamp
     )
     {
+        $this->conexao = $conexao;
         $this->bancoOrigem = $bancoOrigem;
         $this->agenciaOrigem = $agenciaOrigem;
         $this->contaOrigem = $contaOrigem;

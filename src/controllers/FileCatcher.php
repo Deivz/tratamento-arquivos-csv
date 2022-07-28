@@ -4,17 +4,19 @@ namespace Deivz\TratamentoArquivosCsv\controllers;
 
 use Deivz\TratamentoArquivosCsv\models\Transacao;
 use Deivz\TratamentoArquivosCsv\controllers\Renderizador;
+use Deivz\TratamentoArquivosCsv\infrastructure\Conexao;
 
 class FileCatcher extends Renderizador
 {
     public function processarRequisicao()
     {
-        try {
-            $this->verificarArquivo($_FILES['arquivo']);
-        } catch (\Throwable $th) {
-            $_SESSION['mensagemErro'] = "Arquivo não encontrado!";
-            header('Location: /');
-        }
+        $this->verificarArquivo($_FILES['arquivo']);
+        // try {
+        //     $this->verificarArquivo($_FILES['arquivo']);
+        // } catch (\Throwable $th) {
+        //     $_SESSION['mensagemErro'] = "Arquivo não encontrado!";
+        //     header('Location: /');
+        // }
     }
 
     public function verificarArquivo($arquivo)
@@ -36,6 +38,7 @@ class FileCatcher extends Renderizador
 
     public function salvarDados($arquivo)
     {
+        $conexao = Conexao::conectar();
         $caminho = $arquivo['tmp_name'];
         $stream = fopen($caminho, 'r');
         $i = 0;
@@ -47,7 +50,9 @@ class FileCatcher extends Renderizador
             $dataTransacao = substr($linha[$i][7], 0, 10);
 
             if ($dataReferencia === $dataTransacao && $this->verificarCampos($linha[$i])) {
-                $transacao[$j] = new Transacao($linha[$i][0], $linha[$i][1], $linha[$i][2], $linha[$i][3], $linha[$i][4], $linha[$i][5], $linha[$i][6], $linha[$i][7]);
+                $transacao[$j] = new Transacao($conexao, $linha[$i][0], $linha[$i][1], $linha[$i][2], $linha[$i][3], $linha[$i][4], $linha[$i][5], $linha[$i][6], $linha[$i][7]);
+                $this->inserirTransacao($conexao, $transacao[$j]);
+                echo "Inserido com sucesso";
                 $j++;
             }
             $i++;
@@ -65,5 +70,40 @@ class FileCatcher extends Renderizador
         }
 
         return true;
+    }
+
+    public function inserirTransacao($conexao, $transacao)
+    {
+        // $conexao->beginTransaction();
+        $insertQuery = 'INSERT INTO transacoes (
+            banco_origem,
+            agencia_origem,
+            conta_origem,
+            banco_destino,
+            agencia_destino,
+            conta_destino,
+            valor,
+            data_completa
+        ) VALUES (
+            :banco_origem,
+            :agencia_origem,
+            :conta_origem,
+            :banco_destino,
+            :agencia_destino,
+            :conta_destino,
+            :valor,
+            :data_completa
+        );';
+        $stmt = $conexao->prepare($insertQuery);
+        $stmt->execute([
+            ':banco_origem' => $transacao->bancoOrigem,
+            ':agencia_origem' => $transacao->agenciaOrigem,
+            ':conta_origem' => $transacao->contaOrigem,
+            ':banco_destino' => $transacao->bancoDestino,
+            ':agencia_destino' => $transacao->agenciaDestino,
+            ':conta_destino' => $transacao->contaDestino,
+            ':valor' => $transacao->valor,
+            ':data_completa' => $transacao->timeStamp
+        ]);
     }
 }
