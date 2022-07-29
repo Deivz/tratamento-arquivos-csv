@@ -18,9 +18,16 @@
                 <?= $_SESSION['mensagemErro'] ?>
             </div>
     <?php endif ?>
+    <?php
+        if(isset($_SESSION['mensagem'])) : ?>
+            <div class="container mt-3 alert alert-success">
+                <?= $_SESSION['mensagem'] ?>
+            </div>
+    <?php endif ?>
 </body>
 
 <?php
+    unset($_SESSION['mensagem']);
     unset($_SESSION['mensagemErro']);
     require 'rodape.php';
 ?>

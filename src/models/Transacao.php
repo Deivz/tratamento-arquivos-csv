@@ -43,4 +43,6 @@ class Transacao
     {
         return $this->$atributo;
     }
+
+    //FAZER VERIFICAÇÃO DOS CAMPOS AQUI, A CLASSE DEVE SABER SE SUA INSTÂNCIA ESTÁ CORRETA
 }
