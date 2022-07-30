@@ -5,13 +5,15 @@ namespace Deivz\TratamentoArquivosCsv\controllers;
 use Deivz\TratamentoArquivosCsv\models\Transacao;
 use Deivz\TratamentoArquivosCsv\controllers\Renderizador;
 use Deivz\TratamentoArquivosCsv\infrastructure\Conexao;
+use Deivz\TratamentoArquivosCsv\models\Importacao;
 use PDO;
 
 class FileCatcher extends Renderizador
 {
     public function processarRequisicao()
     {
-        $this->verificarArquivo($_FILES['arquivo']);
+        $conexao = Conexao::conectar();
+        $this->verificarArquivo($_FILES['arquivo'], $conexao);
         // try {
         //     $this->verificarArquivo($_FILES['arquivo']);
         // } catch (\Throwable $th) {
@@ -20,11 +22,12 @@ class FileCatcher extends Renderizador
         // }
     }
 
-    public function verificarArquivo($arquivo)
+    public function verificarArquivo($arquivo, $conexao)
     {
         $caminho = $arquivo['tmp_name'];
         $stream = fopen($caminho, 'r');
         $linha = explode(',', fgets($stream));
+        $dataReferencia = substr($linha[7], 0, 10);
 
         if (!isset($linha[7])) {
             $_SESSION['mensagemErro'] = "O arquivo enviado não possui transações, favor verificar!";
@@ -34,51 +37,18 @@ class FileCatcher extends Renderizador
 
         fclose($stream);
 
-        $this->salvarDados($arquivo);
-    }
-
-    public function salvarDados($arquivo)
-    {
-        $conexao = Conexao::conectar();
-        $caminho = $arquivo['tmp_name'];
-        $stream = fopen($caminho, 'r');
-        $i = 0;
-        $j = 0;
-        while (!feof($stream)) {
-            $linha[$i] = explode(',', fgets($stream));
-
-            $dataReferencia = substr($linha[0][7], 0, 10);
-            $dataTransacao = substr($linha[$i][7], 0, 10);
-
-            if ($dataReferencia === $dataTransacao && $this->verificarCampos($linha[$i]) && $this->verificarExistenciaNoBanco($conexao, $dataReferencia)) {
-                $transacao[$j] = new Transacao($conexao, $linha[$i][0], $linha[$i][1], $linha[$i][2], $linha[$i][3], $linha[$i][4], $linha[$i][5], $linha[$i][6], substr($linha[$i][7], 0, 19));
-                $this->inserirTransacao($conexao, $transacao[$j]);
-                $j++;
-                $_SESSION['mensagem'] = "Dados inseridos com sucesso!";
-            }
-            $i++;
+        if($this->verificarExistenciaNoBanco($conexao, $dataReferencia)){
+            $this->verificarDados($arquivo, $conexao, $dataReferencia);
+            $importacao = new Importacao($dataReferencia);
+            $this->inserirImportacao($conexao, $importacao);
         }
-        fclose($stream);
 
         header('Location: /');
-    }
 
-    //REMOVER DAQUI E APLICAR NA CLASSE TRANSACAO
-    public function verificarCampos($linha): bool
-    {
-
-        for ($j = 0; $j < count($linha); $j++) {
-            if ($linha[$j] === '') {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public function verificarExistenciaNoBanco($conexao, $dataReferencia): bool
     {
-        $conexao = Conexao::conectar();
         $sqlQuery = 'SELECT data_completa FROM transacoes';
         $stmt = $conexao->query($sqlQuery);
         $datasRetornadas = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,9 +63,31 @@ class FileCatcher extends Renderizador
         return true;
     }
 
+    public function verificarDados($arquivo, $conexao, $dataReferencia)
+    {
+        $caminho = $arquivo['tmp_name'];
+        $stream = fopen($caminho, 'r');
+        $i = 0;
+        $j = 0;
+        while (!feof($stream)) {
+            $linha[$i] = explode(',', fgets($stream));
+            $dataTransacao = substr($linha[$i][7], 0, 10);
+            if ($dataReferencia === $dataTransacao) {
+                $transacao[$j] = new Transacao($linha[$i]);
+                if ($transacao[$j]->bancoOrigem != '') {
+                    $this->inserirTransacao($conexao, $transacao[$j]);
+                    $j++;
+                    $_SESSION['mensagem'] = "Dados inseridos com sucesso!";
+                }
+            }
+            $i++;
+        }
+
+        fclose($stream);
+    }
+
     public function inserirTransacao($conexao, $transacao)
     {
-        // $conexao->beginTransaction();
         $insertQuery = 'INSERT INTO transacoes (
             banco_origem,
             agencia_origem,
@@ -125,6 +117,22 @@ class FileCatcher extends Renderizador
             ':conta_destino' => $transacao->contaDestino,
             ':valor' => $transacao->valor,
             ':data_completa' => $transacao->timeStamp
+        ]);
+    }
+
+    public function inserirImportacao($conexao, $importacao)
+    {
+        $insertQuery = 'INSERT INTO importacoes (
+            datahora_importacao,
+            data_transacao
+        ) VALUES (
+            :datahora_importacao,
+            :data_transacao
+        );';
+        $stmt = $conexao->prepare($insertQuery);
+        $stmt->execute([
+            ':datahora_importacao' => $importacao->dataHoraImportacao,
+            ':data_transacao' => $importacao->dataTransacao
         ]);
     }
 }

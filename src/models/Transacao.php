@@ -2,11 +2,9 @@
 
 namespace Deivz\TratamentoArquivosCsv\models;
 
-use PDO;
 
 class Transacao
 {
-    private PDO $conexao;
     private string $bancoOrigem;
     private string $agenciaOrigem;
     private string $contaOrigem;
@@ -16,27 +14,20 @@ class Transacao
     private string $valor;
     private string $timeStamp;
 
-    public function __construct(
-        PDO $conexao,
-        string $bancoOrigem,
-        string $agenciaOrigem,
-        string $contaOrigem,
-        string $bancoDestino,
-        string $agenciaDestino,
-        string $contaDestino,
-        string $valor,
-        string $timeStamp
-    )
+    public function __construct(array $linha)
     {
-        $this->conexao = $conexao;
-        $this->bancoOrigem = $bancoOrigem;
-        $this->agenciaOrigem = $agenciaOrigem;
-        $this->contaOrigem = $contaOrigem;
-        $this->bancoDestino = $bancoDestino;
-        $this->agenciaDestino = $agenciaDestino;
-        $this->contaDestino = $contaDestino;
-        $this->valor = $valor;
-        $this->timeStamp = $timeStamp;
+        if ($this->verificarCampos($linha)){
+            $this->bancoOrigem = $linha[0];
+            $this->agenciaOrigem = $linha[1];
+            $this->contaOrigem = $linha[2];
+            $this->bancoDestino = $linha[3];
+            $this->agenciaDestino = $linha[4];
+            $this->contaDestino = $linha[5];
+            $this->valor = $linha[6];
+            $this->timeStamp = substr($linha[7], 0, 19);
+        }else{
+            $this->bancoOrigem = '';
+        }      
     }
 
     public function __get($atributo)
@@ -44,5 +35,14 @@ class Transacao
         return $this->$atributo;
     }
 
-    //FAZER VERIFICAÇÃO DOS CAMPOS AQUI, A CLASSE DEVE SABER SE SUA INSTÂNCIA ESTÁ CORRETA
+    public function verificarCampos($linha): bool
+    {
+        for ($i = 0; $i < count($linha); $i++) {
+            if ($linha[$i] === '') {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
