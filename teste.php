@@ -9,6 +9,7 @@ $pdo = Conexao::conectar();
 echo "conectado";
 
 $pdo->exec('DROP TABLE transacoes;');
+$pdo->exec('DROP TABLE importacoes;');
 
 $pdo->exec(
     'CREATE TABLE transacoes (
@@ -24,10 +25,10 @@ $pdo->exec(
     );'
 );
 
-// $pdo->exec(
-//     'CREATE TABLE importacoes (
-//         id INTEGER PRIMARY KEY,
-//         datahora_importacao TEXT,
-//         data_transacao TEXT
-//     );'
-// );
+$pdo->exec(
+    'CREATE TABLE importacoes (
+        id INTEGER PRIMARY KEY,
+        datahora_importacao TEXT,
+        data_transacao TEXT
+    );'
+);

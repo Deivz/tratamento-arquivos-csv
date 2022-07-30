@@ -9,8 +9,8 @@ class PaginaImportacoes extends Renderizador
 {
     public function processarRequisicao()
     {
+        $this->mostrarImportacoes();
         echo $this->renderizarPagina('/importacoes');
-        var_dump($this->mostrarImportacoes());
     }
 
     public function mostrarImportacoes()
@@ -21,7 +21,7 @@ class PaginaImportacoes extends Renderizador
         $importacoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $this->console_log($importacoes);
-        return $importacoes;
+        return $_SESSION['importacoes'] = $importacoes;
     }
 
     public function console_log($dados)

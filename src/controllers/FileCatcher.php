@@ -12,14 +12,13 @@ class FileCatcher extends Renderizador
 {
     public function processarRequisicao()
     {
-        $conexao = Conexao::conectar();
-        $this->verificarArquivo($_FILES['arquivo'], $conexao);
-        // try {
-        //     $this->verificarArquivo($_FILES['arquivo']);
-        // } catch (\Throwable $th) {
-        //     $_SESSION['mensagemErro'] = "Arquivo não encontrado!";
-        //     header('Location: /');
-        // }
+        try {
+            $conexao = Conexao::conectar();
+            $this->verificarArquivo($_FILES['arquivo'], $conexao);
+        } catch (\Throwable $th) {
+            $_SESSION['mensagemErro'] = "Arquivo não encontrado!";
+            header('Location: /');
+        }
     }
 
     public function verificarArquivo($arquivo, $conexao)
@@ -27,7 +26,7 @@ class FileCatcher extends Renderizador
         $caminho = $arquivo['tmp_name'];
         $stream = fopen($caminho, 'r');
         $linha = explode(',', fgets($stream));
-        $dataReferencia = substr($linha[7], 0, 10);
+        $dataReferencia = $this->formatarData($linha[7]);
 
         if (!isset($linha[7])) {
             $_SESSION['mensagemErro'] = "O arquivo enviado não possui transações, favor verificar!";
@@ -42,9 +41,20 @@ class FileCatcher extends Renderizador
             $importacao = new Importacao($dataReferencia);
             $this->inserirImportacao($conexao, $importacao);
         }
-
+       
         header('Location: /');
+    }
 
+    public function formatarData($data)
+    {
+        $arrayDatas = explode('-', substr($data, 0, 19));
+        $diaHora = explode('T', $arrayDatas[2]);
+        $hora = substr($diaHora[1], 0, 8);
+        $dia = $diaHora[0];
+        $mes = $arrayDatas[1];
+        $ano = $arrayDatas[0];
+
+        return "{$dia}/{$mes}/{$ano}";
     }
 
     public function verificarExistenciaNoBanco($conexao, $dataReferencia): bool
@@ -71,7 +81,7 @@ class FileCatcher extends Renderizador
         $j = 0;
         while (!feof($stream)) {
             $linha[$i] = explode(',', fgets($stream));
-            $dataTransacao = substr($linha[$i][7], 0, 10);
+            $dataTransacao = $this->formatarData($linha[$i][7]);
             if ($dataReferencia === $dataTransacao) {
                 $transacao[$j] = new Transacao($linha[$i]);
                 if ($transacao[$j]->bancoOrigem != '') {

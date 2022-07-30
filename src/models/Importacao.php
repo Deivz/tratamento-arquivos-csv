@@ -9,12 +9,18 @@ class Importacao
 
     public function __construct($data)
     {
-        $this->dataHoraImportacao = date('d/m/Y H:i');
+        $this->dataHoraImportacao = $this->definirFusoBrasil();
         $this->dataTransacao = $data;
     }
 
     public function __get($atributo)
     {
         return $this->$atributo;
+    }
+
+    public function definirFusoBrasil()
+    {
+        date_default_timezone_set('America/Sao_Paulo');
+        return date('d/m/Y H:i:s', time());
     }
 }
