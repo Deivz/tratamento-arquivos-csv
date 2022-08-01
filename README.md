@@ -1,4 +1,4 @@
-# Alura Front End Challenge #4 - Adopet
+# Alura Front End Challenge #4 - Upload e tratamento de arquivo CSV
 
 Repositório criado para o desafio de back end da Alura edição de número 3. O projeto consiste na elaboração de uma API para upload e tratamento de arquivos CSV.
 
